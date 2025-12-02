@@ -19,6 +19,7 @@ AocDay0::~AocDay0()
 
 vector<long> AocDay0::read_input(string filename)
 {
+        cerr << "hello85308935" << endl;
     FileUtils fileutils;
     vector<string> raw_lines;
     vector<long> data;
