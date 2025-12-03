@@ -59,8 +59,11 @@ void find_for_range(string start, string end, long modulus, unordered_set<long> 
     string start_half = start.substr(0, size / modulus);
     string end_half = end.substr(0, size / modulus);
 
-    for (int i = stol(start_half); i <= stol(end_half); i++) {
-        long full = i + i * pow(10, size / modulus);
+    for (long i = stol(start_half); i <= stol(end_half); i++) {
+        string full_s;
+        for (long j = 0; j < modulus; j++) { full_s += std::to_string(i); }
+        long full = stol(full_s);
+
         if (start_l <= full && end_l >= full) {
             cout << full << endl;
             vals->insert(full);
@@ -71,7 +74,7 @@ void find_for_range(string start, string end, long modulus, unordered_set<long> 
 long calc_for_range(string start, string end, long modulus) {
     unordered_set<long> vals;
     find_for_range(start, end, modulus, &vals);
-    return std::accumulate(vals.begin(), vals.end(), 0);
+    return std::accumulate(vals.begin(), vals.end(), 0L);
 }
 
 string AocDay2::part1(string filename, vector<string> extra_args)
@@ -93,16 +96,23 @@ string AocDay2::part1(string filename, vector<string> extra_args)
 string AocDay2::part2(string filename, vector<string> extra_args)
 {   
     vector<string> data = read_input(filename);
-    long total = 0;
+    unordered_set<long> vals;
+
     for (vector<string>::iterator rot = data.begin(); rot != data.end(); ++rot) {
         string range = (*rot);
         string start = range.substr(0, range.find("-"));
         string end = range.substr(range.find("-") + 1, range.length());
-        //string
-        total += calc_for_range(start, end, 2);
+        
+        for (long i = 2; i <= end.size(); i++) {
+            find_for_range(start, end, i, &vals);
+        }
+    }
+
+    for (const long& x : vals) {
+        std::cout << x << "\n";
     }
 
     ostringstream out;
-    out << total;
+    out << std::accumulate(vals.begin(), vals.end(), 0L);
     return out.str();
 }
