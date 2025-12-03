@@ -4,3 +4,5 @@
 1,2,test_cases/day1_test2.txt,25
 2,1,test_cases/day2_test1.txt,1227775554
 2,2,test_cases/day2_test1.txt,4174379265
+3,1,test_cases/day3_test1.txt,357
+3,2,test_cases/day3_test1.txt,3121910778619
