@@ -32,28 +32,28 @@ BitGrid AocDay4::read_input(string filename)
     return BitGrid(raw_lines, '@');
 }
 
+long remove_paper(BitGrid *data) {
+    long sum = 0;
+    BitGrid data_clone = data->clone();
+
+    for (size_t r = 0; r < data_clone.rows; r++)
+    {
+        for (size_t c = 0; c < data_clone.cols; c++) {
+            if (data_clone.get(c, r) && (data_clone.all_adj(c, r).size() < 4)) {
+                data->set(c, r, false);
+                sum += 1;
+            }
+        }
+    }
+
+    return sum;
+}
+
 string AocDay4::part1(string filename, vector<string> extra_args)
 {
     BitGrid data = read_input(filename);
-    long sum = 0;
-    for (size_t r = 0; r < data.rows; r++)
-    {
-        for (size_t c = 0; c < data.cols; c++) {
-            if (data.get(c, r) && (data.all_adj(c, r).size() < 4)) {
-                cout << "x";
-                sum += 1;
-            }
-            else if (data.get(c, r)) {
-                cout << "@";
-            }
-            else {
-                cout << ".";
-            }
-        }
-        cout << endl;
-    }
     ostringstream out;
-    out << sum;
+    out << remove_paper(&data);
     return out.str();
 }
 
@@ -61,13 +61,11 @@ string AocDay4::part2(string filename, vector<string> extra_args)
 {
     BitGrid data = read_input(filename);
     long sum = 0;
-    for (size_t r = 0; r < data.rows; r++)
-    {
-        for (size_t c = 0; c < data.cols; c++) {
-            if (data.all_adj(c, r).size() < 4) {
-                sum += 1;
-            }
-        }
+    long result = -1;
+    while (result != 0) {
+        result = remove_paper(&data);
+        sum += result;
+        cout << result << endl;
     }
     ostringstream out;
     out << sum;

@@ -21,12 +21,15 @@ class BitGrid
         
         BitGrid(vector<string> grid, char true_c);
         ~BitGrid();
+        BitGrid clone() const;
 
         bool get(size_t x, size_t y);
+        void set(size_t x, size_t y, bool val);
         vector<coord> orth_adj(size_t x, size_t y);
         vector<coord> all_adj(size_t x, size_t y);
 
         bool get(coord c);
+        void set(coord c, bool val);
         vector<coord> orth_adj(coord c);
         vector<coord> all_adj(coord c);
 };

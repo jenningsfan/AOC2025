@@ -15,7 +15,6 @@ BitGrid::BitGrid(vector<string> grid, char true_c) {
 
     for (size_t r = 0; r < this->rows; r++) {
         for (size_t c = 0; c < this->cols; c++) {
-            cout << grid[r][c];
             if (grid[r][c] == true_c) {
                 scratch |= 1;
             }
@@ -23,7 +22,6 @@ BitGrid::BitGrid(vector<string> grid, char true_c) {
             
             if (scratch_pos == 64) { // reached the end of scratch so push it and start a new one
                 this->grid.push_back(scratch);
-                cout << scratch << endl;
                 scratch = 0;
                 scratch_pos = 0;
             }
@@ -31,16 +29,18 @@ BitGrid::BitGrid(vector<string> grid, char true_c) {
                 scratch <<= 1;
             }
         }
-        cout << endl;
     }
 
     if (scratch_pos != 0) {
         this->grid.push_back(scratch << (64 - scratch_pos - 1));
-        cout << scratch << endl;
     }
 }
 
 BitGrid::~BitGrid() { }
+
+BitGrid BitGrid::clone() const {
+    return *this;  // uses compiler-generated copy constructor
+}
 
 bool BitGrid::get(size_t x, size_t y) {
     if (x >= this->cols || y >= this->rows) {
@@ -54,6 +54,25 @@ bool BitGrid::get(size_t x, size_t y) {
     //cout << index << " " << grid_num << " " << grid_pos;
 
     return ((this->grid[grid_num] >> grid_pos) & 1) == 1;
+}
+
+void BitGrid::set(size_t x, size_t y, bool val) {
+    if (x >= this->cols || y >= this->rows) {
+        return;
+    }
+
+    size_t index = x + y * this->cols;
+    size_t grid_num = index / 64;
+    size_t grid_pos = (64 - (index % 64)) - 1;
+
+    //cout << index << " " << grid_num << " " << grid_pos;
+
+    if (val) {
+        this->grid[grid_num] |= (1 << grid_pos);
+    }
+    else {
+        this->grid[grid_num] &= ~(1ULL << grid_pos);
+    }
 }
 
 vector<coord> BitGrid::orth_adj(size_t x, size_t y) {
@@ -113,6 +132,10 @@ vector<coord> BitGrid::all_adj(size_t x, size_t y) {
 
 bool BitGrid::get(coord c) {
     return this->get(c.x, c.y);
+}
+
+void BitGrid::set(coord c, bool val) {
+    return this->set(c.x, c.y, val);
 }
 
 vector<coord> BitGrid::orth_adj(coord c) {
