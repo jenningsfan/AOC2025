@@ -8,3 +8,5 @@
 3,2,test_cases/day3_test1.txt,3121910778619
 4,1,test_cases/day4_test1.txt,13
 4,2,test_cases/day4_test1.txt,43
+5,1,test_cases/day5_test1.txt,3
+5,2,test_cases/day5_test1.txt,14
