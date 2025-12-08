@@ -13,3 +13,4 @@
 6,1,test_cases/day6_test1.txt,4277556
 7,1,test_cases/day7_test1.txt,21
 7,2,test_cases/day7_test1.txt,40
+8,1,test_cases/day8_test1.txt,40
