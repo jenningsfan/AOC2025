@@ -20,6 +20,7 @@ class BitGrid
         size_t cols;
         
         BitGrid(vector<string> grid, char true_c);
+        BitGrid(size_t rows, size_t cols);
         ~BitGrid();
         BitGrid clone() const;
 
@@ -32,6 +33,9 @@ class BitGrid
         void set(coord c, bool val);
         vector<coord> orth_adj(coord c);
         vector<coord> all_adj(coord c);
+
+        long bits_set();
+        void print();
 };
 
 #endif

@@ -1,7 +1,10 @@
 #include <vector>
 #include <iostream>
+#include <bit>
+#include <bitset>
 
 #include "bit_grid.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -36,6 +39,12 @@ BitGrid::BitGrid(vector<string> grid, char true_c) {
     }
 }
 
+BitGrid::BitGrid(size_t rows, size_t cols) {
+    this->grid = vector<uint64_t>((rows * cols) / 64 + 1, 0);
+    this->rows = rows;
+    this->cols = cols;
+}
+
 BitGrid::~BitGrid() { }
 
 BitGrid BitGrid::clone() const {
@@ -50,8 +59,6 @@ bool BitGrid::get(size_t x, size_t y) {
     size_t index = x + y * this->cols;
     size_t grid_num = index / 64;
     size_t grid_pos = (64 - (index % 64)) - 1;
-
-    //cout << index << " " << grid_num << " " << grid_pos;
 
     return ((this->grid[grid_num] >> grid_pos) & 1) == 1;
 }
@@ -68,7 +75,7 @@ void BitGrid::set(size_t x, size_t y, bool val) {
     //cout << index << " " << grid_num << " " << grid_pos;
 
     if (val) {
-        this->grid[grid_num] |= (1 << grid_pos);
+        this->grid[grid_num] |= (1ULL << grid_pos);
     }
     else {
         this->grid[grid_num] &= ~(1ULL << grid_pos);
@@ -144,4 +151,27 @@ vector<coord> BitGrid::orth_adj(coord c) {
 
 vector<coord> BitGrid::all_adj(coord c) {
     return this->all_adj(c.x, c.y);
+}
+
+long BitGrid::bits_set() {
+    long sum = 0;
+    for (uint64_t val: this->grid) {
+        sum += popcount(val);
+    }
+
+    return sum;
+}
+
+void BitGrid::print() {
+    for (size_t y = 0; y < this->cols; y++) {
+        for (size_t x = 0; x < this->cols; x++) {
+            if (this->get(x, y)) {
+                cout << '#';
+            }
+            else {
+                cout << '.';
+            }
+        }
+        cout << endl;
+    }
 }
