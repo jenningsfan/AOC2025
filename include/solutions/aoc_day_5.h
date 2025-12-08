@@ -3,11 +3,6 @@
 
 #include "aoc_day.h"
 
-struct range {
-    uint64_t start;
-    uint64_t end;
-};
-
 class AocDay5 : public AocDay
 {
     private:

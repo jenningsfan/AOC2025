@@ -6,6 +6,11 @@
 
 using namespace std;
 
+struct range {
+    uint64_t start;
+    uint64_t end;
+};
+
 /* This is the superclass for all of the daily programs.
  * It will have two functions to override - one for part 1, and one for part 2
  * each of those functions takes two arguments
