@@ -15,3 +15,5 @@
 7,2,test_cases/day7_test1.txt,40
 8,1,test_cases/day8_test1.txt,40
 8,2,test_cases/day8_test1.txt,25272
+9,1,test_cases/day9_test1.txt,50
+9,2,test_cases/day9_test1.txt,24
