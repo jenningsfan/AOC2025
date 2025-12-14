@@ -68,44 +68,26 @@ int calc_area(const array<int,2>& a, const array<int,2>& b) {
     return (abs(a[0] - b[0]) + 1) * (abs(a[1] - b[1]) + 1);
 }
 
-bool point_in_shape(const array<int,2>& a, const vector<array<int,3>> *lines) {
+bool point_in_shape(const array<int,2>& a, const unordered_set<uint64_t> *lines) {
     int inters = 0;
+    uint64_t x = static_cast<uint64_t>(a[0]);
 
-    for (int i = 0; i < lines->size(); i++) {
-        array<int,3> line = lines->at(i);
-        
-        int l_y = line[0];
-        int bef_x = line[1];
-        int aft_x = line[2];
-
-        if (l_y > a[1]) {
-            break;
-        }
-
-        if ((bef_x == a[0] && l_y == a[1]) || (aft_x == a[0] && l_y == a[1])) {
-            return true; // on border
-        }
-
-        if (l_y < a[1]) { // is line y < pos y aka is line above pos
-            if (between(a[0], bef_x, aft_x)) { //&& (!point_in_shape({a[0], l_y - 1}, lines) || !point_in_shape({a[0], l_y + 1}, lines))) { // is x inside line
-                inters += 1;
-            }
-        }
-        else if (l_y == a[1]) { // same y
-            // cout << before[1] << "=" << a[1] << endl;
-            // cout << "ABC" << a[0] << " " << before[0] << " " << after[0] << endl;
-            if (between(a[0], bef_x, aft_x)) {
-                return true;
-            }
-        }
+    if (lines->contains(x << 32 | static_cast<uint64_t>(a[1]))) {
+        return true;
     }
 
-    //cout << a[0] << "," << a[1] << " " << inters << endl;
+    for (uint64_t y = 0; y < a[1]; y++) {
+        uint64_t pos_above = x << 32 | y;
+        uint64_t pos_below = x << 32 | (y + 1);
+        if (!lines->contains(pos_above) && lines->contains(pos_below)) {
+            inters += 1;
+        }
+    }
     
     return (inters % 2) == 1;
 }
 
-bool line_horiz_in_shape(int start, int end, int y, const vector<array<int,3>> *lines) {
+bool line_horiz_in_shape(int start, int end, int y, const unordered_set<uint64_t> *lines) {
     for (int i = start; i <= end; i++) {
         if (!(point_in_shape({ i, y }, lines))) {
             //cout << i << "," << y << "not in shape" << endl;
@@ -117,7 +99,7 @@ bool line_horiz_in_shape(int start, int end, int y, const vector<array<int,3>> *
     return true;
 }
 
-bool line_vert_in_shape(int start, int end, int x, const vector<array<int,3>> *lines) {
+bool line_vert_in_shape(int start, int end, int x, const unordered_set<uint64_t> *lines) {
     for (int i = start; i <= end; i++) {
         if (!(point_in_shape({ x, i }, lines))) {
             //cout << x << "," << i << "not in shape" << endl;
@@ -129,7 +111,7 @@ bool line_vert_in_shape(int start, int end, int x, const vector<array<int,3>> *l
     return true;
 }
 
-bool is_valid(const array<int,2>& a, const array<int,2>& b, const vector<array<int,3>> *lines) {
+bool is_valid(const array<int,2>& a, const array<int,2>& b, const unordered_set<uint64_t> *lines) {
     int u = min(a[1], b[1]);
     int d = max(a[1], b[1]);
     int l = min(a[0], b[0]);
@@ -186,49 +168,39 @@ void print_progress(int lines_completed) {
     std::cout << std::endl;
 }
 
-vector<array<int, 3>> prep_lines(const vector<array<int,2>> *data) {
-    vector<array<int, 3>> lines;
-    lines.reserve(data->size() / 2);
-    int count = 0;
-    int min_x = 0;
-    int max_x = 0;
-    int min_y = 0;
-    int max_y = 0;
+unordered_set<uint64_t> prep_coords(vector<array<int,2>> *data) {
+    unordered_set<uint64_t> coords;
+    coords.reserve(590072); // number of places
 
-    for (int i = 0; i < data->size() - 1; i++) {
+    for (size_t i = 0; i < data->size() - 1; i++) {
         array<int,2> before = data->at(i);
-        array<int,2> after = data->at(i+1);
-        
-        min_x = min(min_x, min(before[0], after[0]));
-        max_x = max(max_x, max(before[0], after[0]));
-        min_y = min(min_y, min(before[1], after[1]));
-        max_y = max(max_y, max(before[1], after[1]));
+        array<int,2> after = data->at(i + 1);
 
-        count += calc_area(before, after) - 1;
-
-        if (before[1] == after[1]) { // is line horiz
-            array<int,3> l = {before[1], min(before[0], after[0]), max(before[0], after[0])};
-            lines.push_back(l);
+        if (before[0] == after[0]) {
+            for (uint64_t y = min(before[1], after[1]); y <= max(before[1], after[1]); y++) {
+                coords.insert(static_cast<uint64_t>(before[0]) << 32 | y);
+            }
+        }
+        else {
+            for (uint64_t x = min(before[0], after[0]); x <= max(before[0], after[0]); x++) {
+                coords.insert(x << 32 | static_cast<uint64_t>(before[1]));
+            }
         }
     }
 
-    std::sort(lines.begin(), lines.end(),
-        [](const array<int,3>& a, const array<int,3>& b) {
-            return a[0] < b[0];
+    for (uint64_t y = 0; y < 12; y++) {
+        for (uint64_t x = 0; x < 15; x++) {
+            if (coords.contains(x << 32 | y)) {
+                cout << "#";
+            }
+            else {
+                cout << ".";
+            }
         }
-    );
-
-    cout << calc_area({min_x, min_y}, {max_x, max_y}) / 8 << endl;
-    cout << count << endl;
-    cout << lines.size() << endl;
-
-    for (auto l: lines) {
-        cout << l[1] << "," << l[0] << " " << l[2] << "," << l[0] << endl;
+        cout << endl;
     }
-
-    cout << endl;
-
-    return lines;
+    
+    return coords;
 }
 
 string AocDay9::part2(string filename, vector<string> extra_args)
@@ -237,7 +209,7 @@ string AocDay9::part2(string filename, vector<string> extra_args)
     data.push_back(data[0]); // add last to end so that it all nicely wraps yipee happiness lala tadah
     int max_area = 0;
     
-    vector<array<int,3>> lines = prep_lines(&data);
+    unordered_set<uint64_t> coords = prep_coords(&data);
 
     // erase_if(data, [](array<int,2> x) {
     //     return x % 2 == 0;
@@ -249,10 +221,12 @@ string AocDay9::part2(string filename, vector<string> extra_args)
         for (size_t inner = outer + 1; inner < data.size() - 1; inner++) {
             int area = calc_area(data[outer], data[inner]);
 
-            if (area > max_area && is_valid(data[outer], data[inner], &lines)) {
-                cout << data[outer][0] << "," << data[outer][1] << " " << data[inner][0] << "," << data[inner][1] << " " << area << endl;
+            cout << data[outer][0] << "," << data[outer][1] << " " << data[inner][0] << "," << data[inner][1] << " " << area << endl;
+            if (area > max_area && is_valid(data[outer], data[inner], &coords)) {
+                cout << "valid and max" << endl;
                 max_area = area;
             }
+            
         }
 
         print_progress(outer);
