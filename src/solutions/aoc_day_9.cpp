@@ -30,6 +30,23 @@ namespace std {
     };
 }
 
+void print_progress(int lines_completed, int total_lines) {
+    cout << lines_completed << endl;
+    float progress = static_cast<float>(lines_completed) / static_cast<float>(total_lines);
+    int barWidth = 70;
+
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << int(progress * 100.0) << " %\r";
+    std::cout.flush();
+    std::cout << std::endl;
+}
+
 AocDay9::AocDay9():AocDay(9)
 {
 }
@@ -68,67 +85,93 @@ int calc_area(const array<int,2>& a, const array<int,2>& b) {
     return (abs(a[0] - b[0]) + 1) * (abs(a[1] - b[1]) + 1);
 }
 
-bool point_in_shape(const array<int,2>& a, const unordered_set<uint64_t> *lines) {
-    int inters = 0;
+bool point_in_shape(const array<int,2>& a, const unordered_set<uint64_t> *lines, int bottom) {
     uint64_t x = static_cast<uint64_t>(a[0]);
 
     if (lines->contains(x << 32 | static_cast<uint64_t>(a[1]))) {
         return true;
     }
 
+    bool inside = false;
+
     for (uint64_t y = 0; y < a[1]; y++) {
         uint64_t pos_above = x << 32 | y;
         uint64_t pos_below = x << 32 | (y + 1);
-        if (!lines->contains(pos_above) && lines->contains(pos_below)) {
-            inters += 1;
+        if (lines->contains(pos_above) && !lines->contains(pos_below)) {
+            //cout << "inter" << x << "," << y << endl;
+            inside = !inside;
         }
     }
     
-    return (inters % 2) == 1;
+    if (!inside) {
+        return false;
+    }
+    else {
+        for (uint64_t y = a[1]; y <= bottom; y++) {
+            if (lines->contains(x << 32 | y)) {
+               return true;
+            }
+        }
+
+        return false;
+    }
 }
 
-bool line_horiz_in_shape(int start, int end, int y, const unordered_set<uint64_t> *lines) {
+int line_horiz_in_shape(int start, int end, int y, const unordered_set<uint64_t> *lines, int bottom) {
     for (int i = start; i <= end; i++) {
-        if (!(point_in_shape({ i, y }, lines))) {
+        if (!(point_in_shape({ i, y }, lines, bottom))) {
+            //cout << i << "," << y << "not in shape" << endl;
+            return i - 1;
+        }
+        //cout << i << "," << y << "in shape" << endl;
+        //cout << i << endl;
+    }
+
+    //cout << "no" << end << endl;
+    return end;
+}
+
+int line_vert_in_shape(int start, int end, int x, const unordered_set<uint64_t> *lines, int bottom) {
+    for (int i = start; i <= end; i++) {
+        if (!(point_in_shape({ x, i }, lines, bottom))) {
+            //cout << x << "," << i << "not in shape" << endl;
+            return i - 1;
+        }
+        //cout << "in shape";
+        //print_progress(end - start - i, end - start);
+        //cout << i << endl;
+    }
+
+    //cout << "no" << end << endl;
+    return end;
+}
+
+bool b_line_horiz_in_shape(int start, int end, int y, const unordered_set<uint64_t> *lines, int bottom) {
+    for (int i = start; i <= end; i++) {
+        if (!(point_in_shape({ i, y }, lines, bottom))) {
             //cout << i << "," << y << "not in shape" << endl;
             return false;
         }
+        //cout << i << "," << y << "in shape" << endl;
         //cout << i << endl;
     }
 
+    //cout << "no" << end << endl;
     return true;
 }
 
-bool line_vert_in_shape(int start, int end, int x, const unordered_set<uint64_t> *lines) {
+bool b_line_vert_in_shape(int start, int end, int x, const unordered_set<uint64_t> *lines, int bottom) {
     for (int i = start; i <= end; i++) {
-        if (!(point_in_shape({ x, i }, lines))) {
+        if (!(point_in_shape({ x, i }, lines, bottom))) {
             //cout << x << "," << i << "not in shape" << endl;
             return false;
         }
+        //cout << x << "," << i << "in shape" << endl;
         //cout << i << endl;
     }
 
+    //cout << "no" << end << endl;
     return true;
-}
-
-bool is_valid(const array<int,2>& a, const array<int,2>& b, const unordered_set<uint64_t> *lines) {
-    int u = min(a[1], b[1]);
-    int d = max(a[1], b[1]);
-    int l = min(a[0], b[0]);
-    int r = max(a[0], b[0]);
-
-    // DBG(u);
-    // DBG(d);
-    // DBG(l);
-    // DBG(r);
-
-    // DBG(line_horiz_in_shape(l, r, u, lines));
-    // DBG(line_horiz_in_shape(l, r, d, lines));
-    // DBG(line_vert_in_shape(u, d, l, lines));
-    // DBG(line_vert_in_shape(u, d, r, lines));
-
-    return (line_horiz_in_shape(l, r, u, lines) && line_horiz_in_shape(l, r, d, lines) &&
-        line_vert_in_shape(u, d, l, lines) && line_vert_in_shape(u, d, r, lines));
 }
 
 string AocDay9::part1(string filename, vector<string> extra_args)
@@ -151,22 +194,6 @@ string AocDay9::part1(string filename, vector<string> extra_args)
     return out.str();
 }
 
-void print_progress(int lines_completed) {
-    cout << lines_completed << endl;
-    float progress = static_cast<float>(lines_completed) / 496.0;
-    int barWidth = 70;
-
-    std::cout << "[";
-    int pos = barWidth * progress;
-    for (int i = 0; i < barWidth; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
-    }
-    std::cout << "] " << int(progress * 100.0) << " %\r";
-    std::cout.flush();
-    std::cout << std::endl;
-}
 
 unordered_set<uint64_t> prep_coords(vector<array<int,2>> *data) {
     unordered_set<uint64_t> coords;
@@ -203,6 +230,26 @@ unordered_set<uint64_t> prep_coords(vector<array<int,2>> *data) {
     return coords;
 }
 
+bool is_valid(const array<int,2>& a, const array<int,2>& b, const unordered_set<uint64_t> *lines, int bottom) {
+    int u = min(a[1], b[1]);
+    int d = max(a[1], b[1]);
+    int l = min(a[0], b[0]);
+    int r = max(a[0], b[0]);
+
+    // DBG(u);
+    // DBG(d);
+    // DBG(l);
+    // DBG(r);
+
+    // DBG(line_horiz_in_shape(l, r, u, lines));
+    // DBG(line_horiz_in_shape(l, r, d, lines));
+    // DBG(line_vert_in_shape(u, d, l, lines));
+    // DBG(line_vert_in_shape(u, d, r, lines));
+
+    return (b_line_horiz_in_shape(l, r, u, lines, bottom) && b_line_horiz_in_shape(l, r, d, lines, bottom) &&
+        b_line_vert_in_shape(u, d, l, lines, bottom) && b_line_vert_in_shape(u, d, r, lines, bottom));
+}
+
 string AocDay9::part2(string filename, vector<string> extra_args)
 {
     vector<array<int,2>> data = read_input(filename);
@@ -210,7 +257,22 @@ string AocDay9::part2(string filename, vector<string> extra_args)
     int max_area = 0;
     
     unordered_set<uint64_t> coords = prep_coords(&data);
+    cout << "prepped" << endl;
+    std::sort(data.begin(), data.end(),
+          [](const std::array<int,2>& a, const std::array<int,2>& b) {
+              if (a[1] != b[1])
+                  return a[1] < b[1];   // higher y first (top to bottom)
+              return a[0] > b[0];       // lower x first (left to right)
+          });
+    cout << "sorted" << endl;
+    int bottom_y = 0;
 
+    for (array<int, 2> c: data) {
+        if (c[1] > bottom_y) {
+            bottom_y = c[1];
+        }
+    }
+    
     // erase_if(data, [](array<int,2> x) {
     //     return x % 2 == 0;
     // });
@@ -218,18 +280,44 @@ string AocDay9::part2(string filename, vector<string> extra_args)
     //cout << "9,5 2,3" << is_valid({ 9, 5 }, { 2, 3 }, &data) << endl;
     
     for (size_t outer = 0; outer < data.size() - 1; outer++) {
-        for (size_t inner = outer + 1; inner < data.size() - 1; inner++) {
-            int area = calc_area(data[outer], data[inner]);
+        uint64_t min_x = data[outer][0];
+        uint64_t min_y = data[outer][1];
+        uint64_t max_x;
+        uint64_t max_y;
 
-            cout << data[outer][0] << "," << data[outer][1] << " " << data[inner][0] << "," << data[inner][1] << " " << area << endl;
-            if (area > max_area && is_valid(data[outer], data[inner], &coords)) {
-                cout << "valid and max" << endl;
-                max_area = area;
+        max_x = line_horiz_in_shape(min_x, INT32_MAX, min_y, &coords, bottom_y);
+        DBG(max_x);
+        max_y = min(line_vert_in_shape(min_y, bottom_y, min_x, &coords, bottom_y), line_vert_in_shape(min_y, bottom_y, max_x, &coords, bottom_y));
+        DBG(max_y);
+        max_x = min(max_x, static_cast<uint64_t>(line_horiz_in_shape(min_x, max_x, max_y, &coords, bottom_y)));
+        DBG(max_x);
+
+        // cout << data[outer][0] << "," << data[outer][1] << endl;
+        cout << max_x << "," << max_y << endl;
+
+        for (size_t inner = outer + 1; inner < data.size() - 1; inner++) {
+            int inner_x = data[inner][0];
+            int inner_y = data[inner][1];
+
+            if (min_x == 9 && min_y == 5) {
+                cout << "SPECIAL" << endl;
+                cout << inner_x << "," << inner_y << endl;
             }
-            
+
+            if (between(inner_x, min_x, max_x) && between(inner_y, min_y, max_y) ) {
+                int area = calc_area(data[outer], data[inner]);
+                cout << "check " << area << " " << data[outer][0] << "," << data[outer][1] << " " << inner_x << "," << inner_y << endl;
+                if (area > max_area) {
+                    cout << "max " << area << " " << data[outer][0] << "," << data[outer][1] << " " << inner_x << "," << inner_y << endl;
+                    max_area = area;
+                }
+            }
+            cout << "inner ";
+            print_progress(inner, data.size() - outer);
         }
 
-        print_progress(outer);
+        cout << "outer ";
+        print_progress(outer, data.size() - 1);
     }
 
     ostringstream out;
