@@ -143,3 +143,24 @@ bool FileUtils::read_as_list_of_split_longs(string filename, vector<vector<long>
     return true;
 }
 
+bool FileUtils::read_as_list_of_split_ints(string filename, vector<vector<int>> & split_longs, char delimiter, char quote_char, char comment_char)
+{
+    vector<string> lines;
+    if (!read_as_list_of_strings(filename, lines))
+    {
+        return false;
+    }
+    for (vector<string>::iterator iter = lines.begin(); iter != lines.end(); ++iter)
+    {
+        vector<string> long_strings = split_line_to_strings(*iter, delimiter, quote_char, comment_char);
+        vector<int> longs;
+        for (vector<string>::iterator str_long_iter = long_strings.begin(); str_long_iter != long_strings.end(); ++str_long_iter)
+        {
+            string str_long = *str_long_iter;
+            longs.push_back(strtol(str_long.c_str(), NULL, 10));
+        }
+        split_longs.push_back(longs);
+    }
+    return true;
+}
+
